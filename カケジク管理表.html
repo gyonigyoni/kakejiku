@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>カケジク管理表</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+  :root {
+    --bg: #0e0c0a;
+    --surface: #1a1612;
+    --surface2: #241e18;
+    --border: #3a2e22;
+    --gold: #c8922a;
+    --gold-light: #e8b84b;
+    --gold-dim: #7a5518;
+    --red: #c03030;
+    --red-light: #e05050;
+    --text: #e8dcc8;
+    --text-dim: #8a7a6a;
+    --text-faint: #5a4a3a;
+    --ur: #c8922a;
+    --ssr: #9060d0;
+    --sr: #4090d0;
+    --r: #808080;
+    --owned: #2a7a2a;
+    --unowned: #5a2a2a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px;
+    min-height: 100vh;
+  }
+
+  /* ヘッダー */
+  header {
+    background: linear-gradient(135deg, #1a1208 0%, #2a1e10 50%, #1a1208 100%);
+    border-bottom: 2px solid var(--gold-dim);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+  }
+
+  header h1 {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 20px;
+    color: var(--gold-light);
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+
+  .header-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  /* サマリー */
+  .summary-bar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 24px;
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .summary-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .summary-label { color: var(--text-dim); font-size: 11px; }
+  .summary-value { color: var(--gold-light); font-weight: 700; font-size: 14px; }
+  .summary-sep { color: var(--border); }
+
+  .conste-summary {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .conste-badge {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .conste-badge span { color: var(--gold); font-weight: 700; }
+
+  /* フィルターバー */
+  .filter-bar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 24px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .filter-group { display: flex; gap: 4px; align-items: center; }
+  .filter-label { color: var(--text-dim); font-size: 11px; margin-right: 2px; }
+
+  .btn {
+    padding: 5px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 11px;
+    font-family: inherit;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .btn:hover { border-color: var(--gold-dim); color: var(--text); }
+  .btn.active { background: var(--gold-dim); border-color: var(--gold); color: var(--gold-light); }
+
+  .btn-rarity-UR.active { background: #3a2a0a; border-color: var(--ur); color: var(--ur); }
+  .btn-rarity-SSR.active { background: #28183a; border-color: var(--ssr); color: var(--ssr); }
+  .btn-rarity-SR.active { background: #0e2035; border-color: var(--sr); color: var(--sr); }
+
+  .search-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 5px 10px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 12px;
+    width: 200px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .search-input:focus { border-color: var(--gold-dim); }
+  .search-input::placeholder { color: var(--text-faint); }
+
+  /* アップロードボタン */
+  .btn-upload {
+    background: linear-gradient(135deg, #1e3a1e, #2a4a2a);
+    border-color: #4a7a4a;
+    color: #88cc88;
+    font-weight: 700;
+    padding: 6px 14px;
+    font-size: 12px;
+  }
+
+  .btn-upload:hover { border-color: #6aaa6a; color: #aaeaaa; background: linear-gradient(135deg, #253f25, #2f5a2f); }
+
+  /* リセットボタン */
+  .btn-reset {
+    background: linear-gradient(135deg, #3a1e1e, #4a2a2a);
+    border-color: #7a4a4a;
+    color: #cc8888;
+    font-size: 12px;
+  }
+
+  .btn-reset:hover { border-color: #aa6a6a; color: #eaaaaa; }
+
+  /* テーブル */
+  .table-wrap {
+    overflow-x: auto;
+    padding: 0 24px 40px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+  }
+
+  thead th {
+    background: var(--surface2);
+    border-bottom: 2px solid var(--gold-dim);
+    border-top: 1px solid var(--border);
+    padding: 8px 10px;
+    text-align: left;
+    color: var(--gold);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  thead th:hover { background: #2e2618; }
+
+  tbody tr {
+    border-bottom: 1px solid #1e1a14;
+    transition: background 0.1s;
+  }
+
+  tbody tr:hover { background: var(--surface2); }
+
+  td {
+    padding: 7px 10px;
+    vertical-align: top;
+    line-height: 1.4;
+  }
+
+  .td-rarity {
+    font-weight: 700;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .rarity-UR { color: var(--ur); }
+  .rarity-SSR { color: var(--ssr); }
+  .rarity-SR { color: var(--sr); }
+  .rarity-R { color: var(--r); }
+
+  .td-name {
+    font-weight: 500;
+    color: var(--text);
+    min-width: 140px;
+    max-width: 220px;
+  }
+
+  .td-type {
+    white-space: nowrap;
+    color: var(--text-dim);
+    font-size: 11px;
+  }
+
+  .td-ability {
+    color: var(--text-dim);
+    font-size: 11px;
+    max-width: 400px;
+    min-width: 200px;
+    line-height: 1.5;
+  }
+
+  .td-conste {
+    text-align: center;
+    white-space: nowrap;
+    min-width: 60px;
+  }
+
+  .conste-stars {
+    display: inline-flex;
+    gap: 2px;
+  }
+
+  .star { color: var(--text-faint); font-size: 12px; }
+  .star.filled { color: var(--gold-light); }
+
+  .badge-unowned {
+    background: var(--unowned);
+    color: #cc8888;
+    border: 1px solid #7a3a3a;
+    border-radius: 10px;
+    padding: 1px 8px;
+    font-size: 11px;
+  }
+
+  .updated-glow {
+    animation: rowglow 1.5s ease-out;
+  }
+
+  @keyframes rowglow {
+    0% { background: rgba(100,160,100,0.3); }
+    100% { background: transparent; }
+  }
+
+  /* ステータス表示 */
+  .status-bar {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 8px 24px;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 11px;
+    color: var(--text-dim);
+    z-index: 50;
+  }
+
+  .status-count { color: var(--gold); font-weight: 700; }
+
+  /* モーダル */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-overlay.show { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--gold-dim);
+    border-radius: 8px;
+    padding: 24px;
+    max-width: 420px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+  }
+
+  .modal h2 {
+    font-family: 'Noto Serif JP', serif;
+    color: var(--gold-light);
+    margin-bottom: 12px;
+    font-size: 16px;
+  }
+
+  .modal p { color: var(--text-dim); margin-bottom: 16px; line-height: 1.6; font-size: 12px; }
+
+  .modal-result {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--text);
+    margin-bottom: 16px;
+    line-height: 1.8;
+  }
+
+  .result-updated { color: #88cc88; }
+  .result-new { color: #88aaff; }
+  .result-unowned { color: #ccaa44; }
+
+  .modal-close {
+    background: var(--gold-dim);
+    border: 1px solid var(--gold);
+    color: var(--gold-light);
+    padding: 7px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    transition: all 0.15s;
+  }
+
+  .modal-close:hover { background: var(--gold); color: #1a1208; }
+
+  /* ソートアイコン */
+  .sort-icon { margin-left: 4px; opacity: 0.5; }
+  .sort-icon.active { opacity: 1; color: var(--gold-light); }
+
+  /* 行数表示 */
+  .row-count { color: var(--text-faint); font-size: 11px; margin-left: auto; }
+
+  /* 更新情報バナー */
+  .update-banner {
+    display: none;
+    background: linear-gradient(135deg, #0e2a0e, #152015);
+    border-bottom: 1px solid #2a5a2a;
+    padding: 6px 24px;
+    font-size: 11px;
+    color: #88cc88;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .update-banner.show { display: flex; }
+
+  /* スクロール調整 */
+  body { padding-bottom: 36px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📜 カケジク管理表</h1>
+  <div class="header-right">
+    <input type="file" id="fileInput" accept=".txt" style="display:none">
+    <button class="btn btn-upload" onclick="document.getElementById('fileInput').click()">
+      ⬆ 所持データ.txt で更新
+    </button>
+    <button class="btn btn-reset" onclick="resetAll()">🔄 リセット</button>
+  </div>
+</header>
+
+<div class="update-banner" id="updateBanner"></div>
+
+<div class="summary-bar" id="summaryBar">
+  <!-- JS で生成 -->
+</div>
+
+<div class="filter-bar">
+  <div class="filter-group">
+    <span class="filter-label">レア</span>
+    <button class="btn btn-rarity-UR active" onclick="toggleFilter('rarity','UR',this)">UR</button>
+    <button class="btn btn-rarity-SSR active" onclick="toggleFilter('rarity','SSR',this)">SSR</button>
+  </div>
+  <div class="filter-group">
+    <span class="filter-label">タイプ</span>
+    <button class="btn active" onclick="toggleFilter('type','all',this)" id="typeAll">すべて</button>
+    <button class="btn" onclick="toggleFilter('type','攻撃',this)">攻撃</button>
+    <button class="btn" onclick="toggleFilter('type','サポート',this)">サポート</button>
+    <button class="btn" onclick="toggleFilter('type','回復',this)">回復</button>
+    <button class="btn" onclick="toggleFilter('type','MP',this)">MP</button>
+    <button class="btn" onclick="toggleFilter('type','防御',this)">防御</button>
+  </div>
+  <div class="filter-group">
+    <span class="filter-label">所持</span>
+    <button class="btn active" onclick="toggleFilter('owned','all',this)" id="ownedAll">すべて</button>
+    <button class="btn" onclick="toggleFilter('owned','owned',this)">所持のみ</button>
+    <button class="btn" onclick="toggleFilter('owned','unowned',this)">未所持のみ</button>
+  </div>
+  <div class="filter-group">
+    <input class="search-input" type="text" id="searchInput" placeholder="名称・アビリティ検索…" oninput="applyFilters()">
+  </div>
+</div>
+
+<div class="table-wrap">
+  <table id="mainTable">
+    <thead>
+      <tr>
+        <th onclick="sortBy('rarity')">レア <span class="sort-icon" id="sort-rarity">▼</span></th>
+        <th onclick="sortBy('type')">タイプ <span class="sort-icon" id="sort-type">▼</span></th>
+        <th onclick="sortBy('name')">名称 <span class="sort-icon" id="sort-name">▼</span></th>
+        <th>アビリティ</th>
+        <th onclick="sortBy('constellation')">凸 <span class="sort-icon" id="sort-constellation">▼</span></th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+</div>
+
+<div class="status-bar">
+  <span>表示: <span class="status-count" id="displayCount">0</span> 件</span>
+  <span>／ 合計 <span class="status-count" id="totalCount">0</span> 件</span>
+  <span style="margin-left:auto; color: var(--text-faint);">所持データ.txt をアップロードすると凸情報を自動更新します</span>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h2 id="modalTitle">更新完了</h2>
+    <p id="modalDesc"></p>
+    <div class="modal-result" id="modalResult"></div>
+    <button class="modal-close" onclick="closeModal()">閉じる</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// データ
+// ============================================================
+const RARITY_ORDER = { UR: 0, SSR: 1, SR: 2, R: 3 };
+
+let masterData = [];
+
+let displayData = [];
+let filters = { rarity: new Set(['UR','SSR']), type: 'all', owned: 'all' };
+let sortKey = 'rarity';
+let sortAsc = true;
+let lastUpdated = null;
+
+// ============================================================
+// 初期化
+// ============================================================
+window.onload = () => {
+  document.getElementById('fileInput').addEventListener('change', handleFileUpload);
+  // kakejiku.json を読み込む
+  fetch('kakejiku.json')
+    .then(r => {
+      if (!r.ok) throw new Error('kakejiku.json が見つかりません');
+      return r.json();
+    })
+    .then(data => {
+      masterData = data;
+      displayData = [...masterData];
+      renderTable();
+      updateSummary();
+    })
+    .catch(err => {
+      document.getElementById('tableBody').innerHTML =
+        `<tr><td colspan="5" style="color:#cc8888;padding:20px;text-align:center;">
+          ⚠ ${err.message}<br>
+          <small style="color:#8a7a6a">kakejiku.json と index.html を同じフォルダに置いてください</small>
+        </td></tr>`;
+    });
+};
+
+// ============================================================
+// テーブルレンダリング
+// ============================================================
+function renderTable() {
+  const body = document.getElementById('tableBody');
+  const rows = getFilteredData();
+  displayData = rows;
+
+  body.innerHTML = rows.map((d, i) => {
+    const isOwned = d.constellation !== '未所持' && d.constellation !== '';
+    const n = parseInt(d.constellation);
+    let consteHtml;
+    if (!isOwned || isNaN(n)) {
+      consteHtml = `<span class="badge-unowned">未所持</span>`;
+    } else {
+      const stars = Array.from({length:5}, (_,j) =>
+        `<span class="star ${j < n ? 'filled' : ''}">★</span>`
+      ).join('');
+      consteHtml = `<span class="conste-stars">${stars}</span>`;
+    }
+
+    return `<tr id="row-${i}">
+      <td class="td-rarity rarity-${d.rarity}">${d.rarity}</td>
+      <td class="td-type">${d.type}</td>
+      <td class="td-name">${esc(d.name)}</td>
+      <td class="td-ability">${esc(d.ability)}</td>
+      <td class="td-conste">${consteHtml}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('displayCount').textContent = rows.length;
+  document.getElementById('totalCount').textContent = masterData.length;
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ============================================================
+// フィルター & ソート
+// ============================================================
+function getFilteredData() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  let data = masterData.filter(d => {
+    if (!filters.rarity.has(d.rarity)) return false;
+    if (filters.type !== 'all' && d.type !== filters.type) return false;
+    if (filters.owned === 'owned' && (d.constellation === '未所持' || d.constellation === '')) return false;
+    if (filters.owned === 'unowned' && d.constellation !== '未所持' && d.constellation !== '') return false;
+    if (q && !d.name.toLowerCase().includes(q) && !d.ability.toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  data.sort((a,b) => {
+    let va, vb;
+    if (sortKey === 'rarity') {
+      va = RARITY_ORDER[a.rarity] ?? 9;
+      vb = RARITY_ORDER[b.rarity] ?? 9;
+    } else if (sortKey === 'constellation') {
+      va = a.constellation === '未所持' || a.constellation === '' ? -1 : parseInt(a.constellation) || 0;
+      vb = b.constellation === '未所持' || b.constellation === '' ? -1 : parseInt(b.constellation) || 0;
+    } else {
+      va = a[sortKey] || '';
+      vb = b[sortKey] || '';
+    }
+    if (va < vb) return sortAsc ? -1 : 1;
+    if (va > vb) return sortAsc ? 1 : -1;
+    return 0;
+  });
+
+  return data;
+}
+
+function applyFilters() { renderTable(); }
+
+function toggleFilter(category, value, btn) {
+  if (category === 'rarity') {
+    if (filters.rarity.has(value)) filters.rarity.delete(value);
+    else filters.rarity.add(value);
+    btn.classList.toggle('active');
+  } else if (category === 'type') {
+    filters.type = value;
+    document.querySelectorAll('.filter-bar .btn').forEach(b => {
+      if (b.textContent.trim() !== 'UR' && b.textContent.trim() !== 'SSR' &&
+          b.textContent.trim() !== 'SR' && b.textContent.trim() !== 'R' &&
+          b.textContent.trim() !== 'すべて' && b.textContent.trim() !== '所持のみ' &&
+          b.textContent.trim() !== '未所持のみ') {
+        b.classList.remove('active');
+      }
+    });
+    document.getElementById('typeAll').classList.remove('active');
+    btn.classList.add('active');
+    if (value === 'all') btn.classList.add('active');
+  } else if (category === 'owned') {
+    filters.owned = value;
+    ['ownedAll'].forEach(id => document.getElementById(id) && document.getElementById(id).classList.remove('active'));
+    document.querySelectorAll('.filter-bar .btn').forEach(b => {
+      if (['すべて','所持のみ','未所持のみ'].includes(b.textContent.trim())) b.classList.remove('active');
+    });
+    btn.classList.add('active');
+  }
+  renderTable();
+}
+
+function sortBy(key) {
+  if (sortKey === key) sortAsc = !sortAsc;
+  else { sortKey = key; sortAsc = true; }
+  document.querySelectorAll('.sort-icon').forEach(el => el.classList.remove('active'));
+  const icon = document.getElementById('sort-' + key);
+  if (icon) { icon.textContent = sortAsc ? '▲' : '▼'; icon.classList.add('active'); }
+  renderTable();
+}
+
+// ============================================================
+// サマリー更新
+// ============================================================
+function updateSummary() {
+  const total = masterData.length;
+  const owned = masterData.filter(d => d.constellation !== '未所持' && d.constellation !== '').length;
+  const unowned = total - owned;
+
+  const counts = {0:0, 1:0, 2:0, 3:0, 4:0, 5:0};
+  masterData.forEach(d => {
+    const n = parseInt(d.constellation);
+    if (!isNaN(n) && n >= 0 && n <= 5) counts[n]++;
+  });
+
+  document.getElementById('summaryBar').innerHTML = `
+    <div class="summary-item">
+      <span class="summary-label">総数</span>
+      <span class="summary-value">${total}</span>
+    </div>
+    <span class="summary-sep">｜</span>
+    <div class="summary-item">
+      <span class="summary-label">所持</span>
+      <span class="summary-value">${owned}</span>
+    </div>
+    <div class="summary-item">
+      <span class="summary-label">未所持</span>
+      <span class="summary-value" style="color:#cc8888">${unowned}</span>
+    </div>
+    <span class="summary-sep">｜</span>
+    <div class="summary-item">
+      <span class="summary-label">凸別</span>
+      <div class="conste-summary">
+        ${[5,4,3,2,1,0].map(n => `<div class="conste-badge">${n}凸 <span>${counts[n]}</span></div>`).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================
+// ファイル読み込み・更新
+// ============================================================
+function handleFileUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      processUpdate(ev.target.result, file.name);
+    } catch(err) {
+      alert('ファイルの読み込みに失敗しました: ' + err.message);
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function processUpdate(text, filename) {
+  // カケジク情報セクションを抽出
+  const kakejikuStart = text.indexOf('カケジク情報:');
+  if (kakejikuStart === -1) {
+    showModal('エラー', 'カケジク情報が見つかりません。', '');
+    return;
+  }
+  const kakejikuText = text.slice(kakejikuStart);
+
+  // 所持データをパース
+  const possessed = new Map(); // name -> 限界突破数（最大値を保持）
+  const nameRegex = /- 名前: '([^']+)'/g;
+  const rarity = /レアリティ: '([^']+)'/;
+  const conste = /限界突破数: (\d+)/;
+
+  // ブロック単位でパース
+  const blocks = kakejikuText.split(/(?=  - 名前:)/);
+  blocks.forEach(block => {
+    const nameM = block.match(/- 名前: '([^']+)'/);
+    const consteM = block.match(/限界突破数: (\d+)/);
+    if (nameM && consteM) {
+      const name = nameM[1];
+      const val = parseInt(consteM[1]);
+      // 同名が複数あれば最大値を使う
+      if (!possessed.has(name) || possessed.get(name) < val) {
+        possessed.set(name, val);
+      }
+    }
+  });
+
+  let updated = 0, notFound = 0;
+  const updatedNames = [];
+  const notFoundNames = [];
+
+  // マスターデータと照合
+  masterData.forEach(item => {
+    if (possessed.has(item.name)) {
+      const newConste = String(possessed.get(item.name));
+      if (item.constellation !== newConste) {
+        item.constellation = newConste;
+        updated++;
+        updatedNames.push(item.name);
+      }
+    } else {
+      // 所持データにない = 未所持
+      if (item.constellation !== '未所持') {
+        item.constellation = '未所持';
+        notFound++;
+        notFoundNames.push(item.name);
+      }
+    }
+  });
+
+  renderTable();
+  updateSummary();
+  lastUpdated = new Date();
+
+  const banner = document.getElementById('updateBanner');
+  banner.className = 'update-banner show';
+  banner.textContent = `✅ ${filename} で更新しました（${lastUpdated.toLocaleTimeString()}）`;
+
+  const resultLines = [];
+  if (updated > 0) resultLines.push(`<span class="result-updated">✔ 凸情報を更新: ${updated} 件</span>`);
+  if (notFound > 0) resultLines.push(`<span class="result-unowned">○ 未所持に変更: ${notFound} 件</span>`);
+  if (updated === 0 && notFound === 0) resultLines.push('変更なし（最新の状態です）');
+
+  showModal(
+    '更新完了',
+    `所持データ（${possessed.size}件）と照合しました。`,
+    resultLines.join('<br>')
+  );
+}
+
+// ============================================================
+// リセット
+// ============================================================
+function resetAll() {
+  if (!confirm('凸情報をすべて「未所持」に戻しますか？')) return;
+  masterData.forEach(d => d.constellation = '未所持');
+  renderTable();
+  updateSummary();
+  document.getElementById('updateBanner').className = 'update-banner';
+  showModal('リセット完了', 'すべての凸情報を未所持に戻しました。', '');
+}
+
+// ============================================================
+// モーダル
+// ============================================================
+function showModal(title, desc, result) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalDesc').textContent = desc;
+  document.getElementById('modalResult').innerHTML = result;
+  document.getElementById('modalResult').style.display = result ? 'block' : 'none';
+  document.getElementById('modalOverlay').className = 'modal-overlay show';
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').className = 'modal-overlay';
+}
+</script>
+</body>
+</html>
