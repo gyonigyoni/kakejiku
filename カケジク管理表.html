@@ -694,19 +694,27 @@ function processUpdate(text, filename) {
   const conste = /限界突破数: (\d+)/;
 
   // ブロック単位でパース
-  const blocks = kakejikuText.split(/(?=  - 名前:)/);
-  blocks.forEach(block => {
-    const nameM = block.match(/- 名前: '([^']+)'/);
-    const consteM = block.match(/限界突破数: (\d+)/);
-    if (nameM && consteM) {
-      const name = nameM[1];
+  // 行単位でパース
+  const lines = kakejikuText.split('\n');
+  let currentName = null;
+  let currentRarity = null;
+  for (const line of lines) {
+    const nameM = line.match(/^\s*- 名前: '([^']+)'/);
+    const rarityM = line.match(/^\s*レアリティ: '([^']+)'/);
+    const consteM = line.match(/^\s*限界突破数: (\d+)/);
+    if (nameM) {
+      currentName = nameM[1];
+    } else if (rarityM) {
+      currentRarity = rarityM[1];
+    } else if (consteM && currentName) {
       const val = parseInt(consteM[1]);
-      // 同名が複数あれば最大値を使う
-      if (!possessed.has(name) || possessed.get(name) < val) {
-        possessed.set(name, val);
+      if (!possessed.has(currentName) || possessed.get(currentName) < val) {
+        possessed.set(currentName, val);
       }
+      currentName = null;
+      currentRarity = null;
     }
-  });
+  }
 
   let updated = 0, notFound = 0;
   const updatedNames = [];
