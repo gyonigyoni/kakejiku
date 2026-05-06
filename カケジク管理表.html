@@ -106,6 +106,44 @@
 
   .conste-badge span { color: var(--gold); font-weight: 700; }
 
+  /* サマリーテーブル */
+  .summary-table {
+    border-collapse: collapse;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .summary-table th, .summary-table td {
+    padding: 2px 10px;
+    text-align: center;
+  }
+
+  .summary-table thead th {
+    color: var(--gold);
+    font-weight: 700;
+    border-bottom: 1px solid var(--gold-dim);
+    background: transparent;
+    position: static;
+    cursor: default;
+    font-size: 11px;
+    letter-spacing: 0;
+  }
+
+  .summary-table thead th:hover { background: transparent; }
+
+  .summary-table .row-label {
+    text-align: left;
+    color: var(--text-dim);
+    padding-left: 4px;
+  }
+
+  .summary-table .col-ur { color: var(--ur); }
+  .summary-table .col-ssr { color: var(--ssr); }
+  .summary-table .col-total { color: var(--gold-light); font-weight: 700; }
+  .summary-table .col-sep { padding: 0 8px; border-left: 1px solid var(--border); }
+  .summary-table .val-owned { color: #88cc88; }
+  .summary-table .val-unowned { color: #cc8888; }
+
   /* フィルターバー */
   .filter-bar {
     background: var(--surface);
@@ -626,37 +664,102 @@ function sortBy(key) {
 // サマリー更新
 // ============================================================
 function updateSummary() {
-  const total = masterData.length;
-  const owned = masterData.filter(d => d.constellation !== '未所持' && d.constellation !== '').length;
-  const unowned = total - owned;
+  const rarities = ['UR', 'SSR'];
+  const stats = {};
+  let totalAll = 0, ownedAll = 0, unownedAll = 0;
+  const countsAll = {0:0,1:0,2:0,3:0,4:0,5:0};
 
-  const counts = {0:0, 1:0, 2:0, 3:0, 4:0, 5:0};
-  masterData.forEach(d => {
-    const n = parseInt(d.constellation);
-    if (!isNaN(n) && n >= 0 && n <= 5) counts[n]++;
+  rarities.forEach(r => {
+    const items = masterData.filter(d => d.rarity === r);
+    const owned = items.filter(d => d.constellation !== '未所持' && d.constellation !== '').length;
+    const counts = {0:0,1:0,2:0,3:0,4:0,5:0};
+    items.forEach(d => {
+      const n = parseInt(d.constellation);
+      if (!isNaN(n) && n >= 0 && n <= 5) { counts[n]++; countsAll[n]++; }
+    });
+    stats[r] = { total: items.length, owned, unowned: items.length - owned, counts };
+    totalAll += items.length;
+    ownedAll += owned;
+    unownedAll += items.length - owned;
   });
 
+  const ur = stats['UR'], ssr = stats['SSR'];
+
   document.getElementById('summaryBar').innerHTML = `
-    <div class="summary-item">
-      <span class="summary-label">総数</span>
-      <span class="summary-value">${total}</span>
-    </div>
-    <span class="summary-sep">｜</span>
-    <div class="summary-item">
-      <span class="summary-label">所持</span>
-      <span class="summary-value">${owned}</span>
-    </div>
-    <div class="summary-item">
-      <span class="summary-label">未所持</span>
-      <span class="summary-value" style="color:#cc8888">${unowned}</span>
-    </div>
-    <span class="summary-sep">｜</span>
-    <div class="summary-item">
-      <span class="summary-label">凸別</span>
-      <div class="conste-summary">
-        ${[5,4,3,2,1,0].map(n => `<div class="conste-badge">${n}凸 <span>${counts[n]}</span></div>`).join('')}
-      </div>
-    </div>
+    <table class="summary-table">
+      <thead>
+        <tr>
+          <th></th>
+          <th class="col-ur">UR</th>
+          <th class="col-ssr">SSR</th>
+          <th class="col-total">合計</th>
+          <th class="col-sep"></th>
+          <th class="col-conste"></th>
+          <th class="col-ur">UR</th>
+          <th class="col-ssr">SSR</th>
+          <th class="col-total">合計</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="row-label">総件数</td>
+          <td class="col-ur">${ur.total}</td>
+          <td class="col-ssr">${ssr.total}</td>
+          <td class="col-total">${totalAll}</td>
+          <td class="col-sep"></td>
+          <td class="row-label">5凸</td>
+          <td class="col-ur">${ur.counts[5]}</td>
+          <td class="col-ssr">${ssr.counts[5]}</td>
+          <td class="col-total">${countsAll[5]}</td>
+        </tr>
+        <tr>
+          <td class="row-label">所持数</td>
+          <td class="col-ur val-owned">${ur.owned}</td>
+          <td class="col-ssr val-owned">${ssr.owned}</td>
+          <td class="col-total val-owned">${ownedAll}</td>
+          <td class="col-sep"></td>
+          <td class="row-label">4凸</td>
+          <td class="col-ur">${ur.counts[4]}</td>
+          <td class="col-ssr">${ssr.counts[4]}</td>
+          <td class="col-total">${countsAll[4]}</td>
+        </tr>
+        <tr>
+          <td class="row-label">未所持</td>
+          <td class="col-ur val-unowned">${ur.unowned}</td>
+          <td class="col-ssr val-unowned">${ssr.unowned}</td>
+          <td class="col-total val-unowned">${unownedAll}</td>
+          <td class="col-sep"></td>
+          <td class="row-label">3凸</td>
+          <td class="col-ur">${ur.counts[3]}</td>
+          <td class="col-ssr">${ssr.counts[3]}</td>
+          <td class="col-total">${countsAll[3]}</td>
+        </tr>
+        <tr>
+          <td></td><td></td><td></td><td></td>
+          <td class="col-sep"></td>
+          <td class="row-label">2凸</td>
+          <td class="col-ur">${ur.counts[2]}</td>
+          <td class="col-ssr">${ssr.counts[2]}</td>
+          <td class="col-total">${countsAll[2]}</td>
+        </tr>
+        <tr>
+          <td></td><td></td><td></td><td></td>
+          <td class="col-sep"></td>
+          <td class="row-label">1凸</td>
+          <td class="col-ur">${ur.counts[1]}</td>
+          <td class="col-ssr">${ssr.counts[1]}</td>
+          <td class="col-total">${countsAll[1]}</td>
+        </tr>
+        <tr>
+          <td></td><td></td><td></td><td></td>
+          <td class="col-sep"></td>
+          <td class="row-label">0凸</td>
+          <td class="col-ur">${ur.counts[0]}</td>
+          <td class="col-ssr">${ssr.counts[0]}</td>
+          <td class="col-total">${countsAll[0]}</td>
+        </tr>
+      </tbody>
+    </table>
   `;
 }
 
